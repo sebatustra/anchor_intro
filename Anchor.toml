@@ -3,15 +3,16 @@
 [features]
 resolution = true
 skip-lint = false
+seeds = true
 
 [programs.localnet]
-anchor_student_intro = "GztZcTBZTcv5DUwY6dRWgzFL5WhcNZ8Wx8zRSoLniXZM"
+anchor_student_intro = "8hkDLDXHJpXwEufzpUtWp5WhgVBvfoywcXApnpDXTEk2"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "Localnet"
 wallet = "/home/sebatustra/my-solana-wallet/my-keypair.json"
 
 [scripts]
