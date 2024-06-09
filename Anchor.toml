@@ -6,7 +6,7 @@ skip-lint = false
 seeds = true
 
 [programs.localnet]
-anchor_student_intro = "8hkDLDXHJpXwEufzpUtWp5WhgVBvfoywcXApnpDXTEk2"
+anchor_student_intro = "DQRdzv6NdrUEGWvMfbiqXDvFQSQ9kEnW76w2cpk84BmV"
 
 [registry]
 url = "https://api.apr.dev"

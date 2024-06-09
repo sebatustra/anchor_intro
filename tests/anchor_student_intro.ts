@@ -11,6 +11,8 @@ describe("anchor_student_intro", () => {
 
     const program = anchor.workspace.AnchorStudentIntro as Program<AnchorStudentIntro>;
 
+    const commenter = anchor.web3.Keypair.generate();
+    
     const intro = {
         name: "Sebastián Jara",
         message: "mensaje de prueba"
@@ -31,6 +33,26 @@ describe("anchor_student_intro", () => {
         program.programId
     );
 
+    const introComment = {
+        comment: "Buena intro bro"
+    };
+
+    const [commentPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+        [
+            commenter.publicKey.toBuffer(),
+            introPDA.toBuffer()
+        ],
+        program.programId
+    );
+
+    const [commentCounterPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("counter"),
+            introPDA.toBuffer()
+        ],
+        program.programId
+    )
+
     it("Initialized the reward mint", async () => {
         await program.methods
             .initializeMint()
@@ -50,7 +72,7 @@ describe("anchor_student_intro", () => {
                 intro.message
             )
             .accounts({
-                tokenAccount
+                tokenAccount,
             })
             .rpc();
 
@@ -65,7 +87,49 @@ describe("anchor_student_intro", () => {
 
         expect(Number(userATA.amount)).to.equal(10)
 
+        const counter = await program.account.commentCounterState.fetch(commentCounterPDA);
+
+        expect(Number(counter.count)).to.equal(0)
+        expect(counter.introAccount.toString()).to.equal(introPDA.toString())
+
     });
+
+    it("Intro is commented", async () => {
+
+        const commenterTokenAccount = await getAssociatedTokenAddress(
+            mintPDA,
+            commenter.publicKey
+        );
+
+        const tx = await provider.connection.requestAirdrop(commenter.publicKey, anchor.web3.LAMPORTS_PER_SOL * 10)
+        await provider.connection.confirmTransaction(tx)
+
+        await program.methods
+            .addCommentToIntro(introComment.comment)
+            .accounts({
+                commenter: commenter.publicKey,
+                intro: introPDA,
+                tokenAccount: commenterTokenAccount
+            })
+            .signers([commenter])
+            .rpc()
+
+        const commentAccount = await program.account.introCommentState.fetch(commentPDA);
+        expect(commentAccount.comment).to.equal(introComment.comment);
+        expect(commentAccount.commenter.toString()).to.equal(commenter.publicKey.toString())
+
+        const counter = await program.account.commentCounterState.fetch(commentCounterPDA);
+
+        expect(Number(counter.count)).to.equal(1)
+        expect(counter.introAccount.toString()).to.equal(introPDA.toString())
+
+        const commenterATA = await getAccount(
+            provider.connection,
+            commenterTokenAccount
+        );
+
+        expect(Number(commenterATA.amount)).to.equal(2)
+    })
 
     it("Student intro is updated", async () => {
         const newMessage = "otro mensaje de prueba";
